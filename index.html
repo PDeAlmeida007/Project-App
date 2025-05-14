@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Open Day App</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .square-button {
+      aspect-ratio: 1 / 1;
+      width: 100%;
+    }
+  </style>
+</head>
+<body id="body" style="background-color: #0F243F" class="min-h-screen text-white">
+  <div class="p-6 max-w-xl mx-auto">
+    <div class="flex justify-between items-center mb-4">
+      <img id="logo" src="WLV.png" alt="University of Wolverhampton Logo" class="h-12 filter invert-0" />
+      <button id="modeToggle" onclick="toggleMode()" class="bg-white text-black px-3 py-1 rounded text-sm">
+        <i data-lucide="sun"></i>
+      </button>
+    </div>
+
+    <div id="greeting" class="bg-gray-100 text-black shadow p-4 rounded-xl mb-4 text-center">
+      <p class="text-lg font-semibold" id="timeGreeting">Good Day!</p>
+      <p class="text-sm text-gray-600" id="nextEvent">Next Event: Loading...</p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-4 justify-items-center">
+      <a href="check-in.html" class="bg-blue-500 text-white p-4 rounded-xl text-center block square-button flex flex-col justify-center items-center">
+        <i data-lucide="log-in" class="w-6 h-6 mb-1"></i>
+        Check-in
+      </a>
+      <a href="events.html" class="bg-blue-500 text-white p-4 rounded-xl text-center block square-button flex flex-col justify-center items-center">
+        <i data-lucide="calendar" class="w-6 h-6 mb-1"></i>
+        Events
+      </a>
+      <a href="locations.html" class="bg-blue-500 text-white p-4 rounded-xl text-center block square-button flex flex-col justify-center items-center">
+        <i data-lucide="map-pin" class="w-6 h-6 mb-1"></i>
+        Locations
+      </a>
+      <a href="feedback.html" class="bg-blue-500 text-white p-4 rounded-xl text-center block square-button flex flex-col justify-center items-center">
+        <i data-lucide="message-square" class="w-6 h-6 mb-1"></i>
+        Feedback
+      </a>
+    </div>
+
+    <a href="help.html" class="bg-red-500 text-white p-4 rounded-xl text-center block w-full">Help</a>
+  </div>
+
+  <!-- ✅ moved script just before </body> -->
+  <script>
+  lucide.createIcons();
+
+  const greetingElement = document.getElementById("timeGreeting");
+  const nextEventElement = document.getElementById("nextEvent");
+
+  const now = new Date();
+  const hour = now.getHours();
+  let greeting = "Hello";
+  if (hour < 12) greeting = "Good Morning";
+  else if (hour < 17) greeting = "Good Afternoon";
+  else greeting = "Good Evening";
+  greetingElement.textContent = `${greeting}, Welcome to Open Day!`;
+
+  const events = [
+    { time: "09:00", title: "Welcome & Introduction" },
+    { time: "10:00", title: "Course Taster" },
+    { time: "13:00", title: "Tour of the University" },
+    { time: "14:00", title: "Department Meetup" },
+  ];
+
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  const next = events.find(event => {
+    const [h, m] = event.time.split(":").map(Number);
+    return h * 60 + m > currentTime;
+  });
+
+  nextEventElement.textContent = next
+    ? `Next Event: ${next.title} at ${next.time}`
+    : "No more events today.";
+
+  function toggleMode() {
+    const body = document.getElementById("body");
+    const logo = document.getElementById("logo");
+    const toggleBtn = document.getElementById("modeToggle");
+    const isDark = body.style.backgroundColor === "rgb(15, 36, 63)" || body.style.backgroundColor === "#0F243F";
+
+    if (isDark) {
+      body.style.backgroundColor = "white";
+      body.classList.remove("text-white");
+      body.classList.add("text-black");
+      document.querySelectorAll(".square-button").forEach(btn => {
+        btn.classList.remove("bg-blue-500", "text-white");
+        btn.classList.add("bg-blue-200", "text-black");
+      });
+      logo.classList.add("invert");
+      toggleBtn.innerHTML = '<i data-lucide="moon"></i>';
+    } else {
+      body.style.backgroundColor = "#0F243F";
+      body.classList.remove("text-black");
+      body.classList.add("text-white");
+      document.querySelectorAll(".square-button").forEach(btn => {
+        btn.classList.remove("bg-blue-200", "text-black");
+        btn.classList.add("bg-blue-500", "text-white");
+      });
+      logo.classList.remove("invert");
+      toggleBtn.innerHTML = '<i data-lucide="sun"></i>';
+    }
+    lucide.createIcons();
+  }
+
+  // Use sessionStorage to securely store session information temporarily
+  window.sessionStorage.setItem('isAuthenticated', 'true');  // Example; set this based on actual server-side response
+  window.sessionStorage.setItem('role', 'user');  // Example; role can be set by the server
+
+  // Modified client-side check that works in combination with the server-side validation
+  window.checkAuth = function(page) {
+    const isAuthenticated = window.sessionStorage.getItem('isAuthenticated') === 'true';
+    const userRole = window.sessionStorage.getItem('role');
+
+    if (!isAuthenticated) {
+      alert('Access denied: Please log in.');
+      return false;
+    }
+
+    if (page === 'admin' && userRole !== 'admin') {
+      alert('Access denied: Admins only.');
+      return false;
+    }
+
+    alert('Access granted!');
+    return true;
+  };
+
+  // Check for authentication only if navigating to a restricted page
+  window.onload = function() {
+    // Check if the current page requires authentication
+    const restrictedPages = ['check-in.html', 'events.html', 'admin.html'];  // Add more restricted pages as needed
+    const currentPage = window.location.pathname.split("/").pop();
+
+    if (restrictedPages.includes(currentPage)) {
+      window.checkAuth(currentPage);  // Use the current page's name as argument
+    }
+  };
+
+  </script>
+
+</body>
+</html>
